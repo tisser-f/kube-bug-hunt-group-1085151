@@ -261,13 +261,14 @@ verify() {
   log "Vérification RabbitMQ (vhost $MQ_VHOST)"
   k -n "$NS_MQ" exec rabbitmq-0 -c rabbitmq -- rabbitmqctl -q list_exchanges -p "$MQ_VHOST" name type durable
   k -n "$NS_MQ" exec rabbitmq-0 -c rabbitmq -- rabbitmqctl -q list_queues -p "$MQ_VHOST" name durable arguments
-  local q
+  # Sortie capturée avant grep -q : sinon SIGPIPE + pipefail = faux échec.
+  local q queues users
+  queues="$(k -n "$NS_MQ" exec rabbitmq-0 -c rabbitmq -- rabbitmqctl -q list_queues -p "$MQ_VHOST" name)"
   for q in orders.q orders.dlq; do
-    k -n "$NS_MQ" exec rabbitmq-0 -c rabbitmq -- rabbitmqctl -q list_queues -p "$MQ_VHOST" name \
-      | grep -qx "$q" || die "Queue $q absente."
+    grep -qx "$q" <<<"$queues" || die "Queue $q absente."
   done
-  k -n "$NS_MQ" exec rabbitmq-0 -c rabbitmq -- rabbitmqctl -q list_users \
-    | grep -q "^${MQ_APP_USER}\b" || die "Utilisateur $MQ_APP_USER absent."
+  users="$(k -n "$NS_MQ" exec rabbitmq-0 -c rabbitmq -- rabbitmqctl -q list_users)"
+  grep -q "^${MQ_APP_USER}\b" <<<"$users" || die "Utilisateur $MQ_APP_USER absent."
   [[ -n "$(k -n "$NS_MQ" get servicemonitor -o name)" ]] || die "Aucun ServiceMonitor RabbitMQ."
   ok "Topologie et ServiceMonitor OK"
 }
