@@ -38,14 +38,18 @@ install_agent() {
   local node=$1 server_ip=$2 token_file=$3
   [[ -r $token_file ]] || die "Fichier token illisible : $token_file"
   set_hostname "$node"
+  # L'installeur recopie les variables K3S_* dans le service : on passe la valeur
+  # du token (fichier root 600), pas le chemin d'un fichier temporaire.
+  local token
+  token="$(<"$token_file")"
   curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="$K3S_VERSION" \
-    K3S_URL="https://${server_ip}:6443" K3S_TOKEN_FILE="$token_file" sh -s - agent --node-name "$node"
+    K3S_URL="https://${server_ip}:6443" K3S_TOKEN="$token" sh -s - agent --node-name "$node"
   echo "Agent $node installé."
 }
 
 # Orchestration SSH depuis le poste admin.
 deploy() {
-  local env_file self tmp i ip user
+  local env_file self i ip user
   env_file="$(dirname "${BASH_SOURCE[0]}")/../lab.env"
   [[ -r $env_file ]] || die "lab.env introuvable (copier lab.env.example)."
   # shellcheck source=/dev/null
@@ -56,8 +60,8 @@ deploy() {
   done
 
   self="$(realpath "${BASH_SOURCE[0]}")"
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' EXIT
+  tmp="$(mktemp -d)"   # globale : le trap EXIT s'exécute hors de la fonction
+  trap 'rm -rf "${tmp:-}"' EXIT
 
   log "vm1 ($VM1_IP) : installation du server"
   scp -q "$self" "$VM1_USER@$VM1_IP:install-k3s.sh"
