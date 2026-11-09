@@ -48,6 +48,8 @@ install_agent() {
 }
 
 # Orchestration SSH depuis le poste admin.
+# SC2029 : les variables des commandes ssh sont volontairement développées côté client.
+# shellcheck disable=SC2029
 deploy() {
   local env_file self i ip user
   env_file="$(dirname "${BASH_SOURCE[0]}")/../lab.env"
