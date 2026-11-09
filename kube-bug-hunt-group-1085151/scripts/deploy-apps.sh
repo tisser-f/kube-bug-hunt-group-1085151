@@ -5,7 +5,8 @@ set -Eeuo pipefail
 export KUBECONFIG="${KUBECONFIG:-/etc/rancher/k3s/k3s.yaml}"
 
 readonly NS="app"
-readonly MANIFEST="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lab/d-messaging/apps.yaml"
+MANIFEST="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lab/d-messaging/apps.yaml"
+readonly MANIFEST
 readonly PF_PORT=18080
 PF_PID=""
 
