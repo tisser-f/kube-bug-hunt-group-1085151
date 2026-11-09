@@ -1,5 +1,4 @@
-# CI minimale (étape 1) : lint des scripts et des manifestes, scan de configuration.
-# Le scan Trivy est informatif ici ; il deviendra bloquant à l'étape CI.
+# CI minimale : lint + scan de configuration (Trivy informatif pour l'instant).
 
 stages: [lint, scan]
 
