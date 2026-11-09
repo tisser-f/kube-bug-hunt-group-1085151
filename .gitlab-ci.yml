@@ -1,0 +1,37 @@
+# CI minimale (étape 1) : lint des scripts et des manifestes, scan de configuration.
+# Le scan Trivy est informatif ici ; il deviendra bloquant à l'étape CI.
+
+stages: [lint, scan]
+
+variables:
+  PROJECT_DIR: kube-bug-hunt-group-1085151
+
+shellcheck:
+  stage: lint
+  image: koalaman/shellcheck-alpine:v0.10.0
+  script:
+    - shellcheck --version
+    - shellcheck "$PROJECT_DIR"/scripts/*.sh
+
+yamllint:
+  stage: lint
+  image: python:3.12-slim
+  script:
+    - pip install --quiet yamllint==1.35.1
+    - yamllint .gitlab-ci.yml "$PROJECT_DIR"
+
+kubeconform:
+  stage: lint
+  image:
+    name: ghcr.io/yannh/kubeconform:v0.6.7-alpine
+    entrypoint: [""]
+  script:
+    - /kubeconform -strict -summary -ignore-missing-schemas "$PROJECT_DIR"/lab
+
+trivy-config:
+  stage: scan
+  image:
+    name: aquasec/trivy:0.74.0
+    entrypoint: [""]
+  script:
+    - trivy config --exit-code 0 --severity HIGH,CRITICAL "$PROJECT_DIR"
